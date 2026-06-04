@@ -3,3 +3,7 @@ uvicorn
 openai
 pydantic
 redis
+langchain
+langgraph
+langchain-openai
+requests
