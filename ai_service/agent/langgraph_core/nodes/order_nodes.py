@@ -23,8 +23,13 @@ def query_order_node(state):
         state["final_answer"] = "请提供订单号，我才能帮您查询订单状态。"
         return state
 
-    order_info = get_order_status(order_id)
-    state["order_info"] = order_info
+    result = get_order_status(order_id)
+
+    if not result.get("success"):
+        state["final_answer"] = "订单查询失败，请稍后再试。"
+        return state
+
+    state["order_info"] = result.get("data")
 
     return state
 

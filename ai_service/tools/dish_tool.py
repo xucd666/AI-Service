@@ -16,12 +16,26 @@ def get_low_fat_dishes():
         response = requests.get(url,timeout=Config.TOOL_TIMEOUT)
         cost_time = round(time.time() - start_time, 2)
         logger.info(f"减脂餐接口响应码: {response.status_code}，执行耗时: {cost_time} s")
+
         result = response.json()
-        return result["data"]
+
+        return {
+            "success": True,
+            "data": result.get("data", []),
+            "error": None
+        }
     except Exception as e:
         cost_time = round(time.time() - start_time, 2)
-        logger.error(f"减脂餐接口调用失败，执行耗时: {cost_time} s，异常: {str(e)}", exc_info=True)
-        return []
+        logger.error(
+            f"减脂餐接口调用失败，执行耗时: {cost_time} s，异常: {str(e)}",
+            exc_info=True
+        )
+
+        return {
+            "success": False,
+            "data": [],
+            "error": str(e)
+        }
 
 # ========================
 # Tool 注册映射表

@@ -14,12 +14,29 @@ def get_order_status(order_id):
         response = requests.get(url,timeout=Config.TOOL_TIMEOUT)
         cost_time = round(time.time() - start_time, 2)  # 计算耗时
         logger.info(f"订单接口响应码: {response.status_code}，执行耗时: {cost_time} s")
+
         result = response.json()
-        return result["data"]
+
+        return {
+            "success": True,
+            "data": {
+                "order_id": order_id,
+                "status": result.get("data")
+            },
+            "error": None
+        }
     except Exception as e:
         cost_time = round(time.time() - start_time, 2)
-        logger.error(f"订单接口调用失败，执行耗时: {cost_time} s，异常: {str(e)}", exc_info=True)
-        return []
+        logger.error(
+            f"订单接口调用失败，执行耗时: {cost_time} s，异常: {str(e)}",
+            exc_info=True
+        )
+
+        return {
+            "success": False,
+            "data": None,
+            "error": str(e)
+        }
 
 # Tool 映射表（企业标准）
 tool_map = {

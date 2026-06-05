@@ -8,6 +8,7 @@ from prompts.customer_prompt import CUSTOMER_SERVICE_PROMPT
 from models.request import ChatRequest, ApiResponse
 from config import Config
 from logger import get_logger
+from agent.langgraph_core.service import chat_with_langgraph
 
 logger = get_logger("Main")
 #初始化FastAPI
@@ -40,6 +41,23 @@ async def clear_session(session_id: str):
         return ApiResponse(code=1, message="会话历史已清空", data=None)
     except Exception as e:
         err_msg = f"清空会话失败: {str(e)}"
+        logger.error(err_msg, exc_info=True)
+        return ApiResponse(code=0, message=str(e), data=None)
+
+@app.post("/chat/langgraph", response_model=ApiResponse)
+async def chat_langgraph(request: ChatRequest):
+    """LangGraph 测试聊天接口"""
+    logger.info("收到 /chat/langgraph 接口请求")
+    try:
+        result = chat_with_langgraph(request.message)
+
+        return ApiResponse(
+            code=1,
+            message="success",
+            data=result["answer"]
+        )
+    except Exception as e:
+        err_msg = f"LangGraph接口处理异常: {str(e)}"
         logger.error(err_msg, exc_info=True)
         return ApiResponse(code=0, message=str(e), data=None)
 
