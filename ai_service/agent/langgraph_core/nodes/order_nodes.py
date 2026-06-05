@@ -5,11 +5,13 @@ from tools.order_tool import get_order_status
 
 def extract_order_id_node(state):
     """
-    从用户输入中提取订单编号
+    优先使用 Router 已经提取出的 order_id；
+    如果 Router 没提取到，再从用户输入中兜底正则提取。
     """
-    user_input = state.get("user_input","")
+    if state.get("order_id"):
+        return state
 
-    # 尝试匹配订单编号
+    user_input = state.get("user_input", "")
     match = re.search(r'\d+', user_input)
 
     state["order_id"] = match.group() if match else None
