@@ -1,18 +1,9 @@
 import json
-from typing import Optional
 
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
+from agent.langgraph_core.model import chat_model
 
-from config import Config
 
-
-llm = ChatOpenAI(
-    model=Config.LLM_MODEL,
-    api_key=Config.API_KEY,
-    base_url=Config.BASE_URL,
-    temperature=0
-)
 
 
 def safe_parse_router_result(content: str) -> dict:
@@ -79,7 +70,7 @@ def router_node(state):
         HumanMessage(content=user_input)
     ]
 
-    response = llm.invoke(messages)
+    response = chat_model.invoke(messages)
 
     result = safe_parse_router_result(response.content)
 

@@ -1,3 +1,8 @@
+from agent.langgraph_core.answer_model import generate_customer_answer
+from agent.langgraph_core.answer_prompts import (
+    DISH_BEST_ANSWER_SYSTEM_PROMPT,
+    DISH_LIST_ANSWER_SYSTEM_PROMPT,
+)
 from tools.dish_tool import get_low_fat_dishes
 
 
@@ -5,6 +10,7 @@ LOWEST_CALORIE_KEYWORDS = (
     "最低",
     "最少",
     "最小",
+    "低卡",
     "热量低",
     "热量最低",
     "卡路里最低",
@@ -59,6 +65,18 @@ def answer_dish_list_node(state):
         state["final_answer"] = "当前没有查询到减脂餐。"
         return state
 
+    try:
+        state["final_answer"] = generate_customer_answer(
+            DISH_LIST_ANSWER_SYSTEM_PROMPT,
+            state.get("user_input", ""),
+            {
+                "dishes": dishes,
+            },
+        )
+        return state
+    except Exception:
+        pass
+
     lines = []
     for dish in dishes:
         name = dish.get("name", "未知菜品")
@@ -69,7 +87,7 @@ def answer_dish_list_node(state):
     return state
 
 
-def answer_dish_node(state):
+def answer_best_dish_node(state):
     best_dish = state.get("best_dish")
 
     if state.get("final_answer"):
@@ -78,6 +96,18 @@ def answer_dish_node(state):
     if not best_dish:
         state["final_answer"] = "当前没有查询到合适的减脂餐。"
         return state
+
+    try:
+        state["final_answer"] = generate_customer_answer(
+            DISH_BEST_ANSWER_SYSTEM_PROMPT,
+            state.get("user_input", ""),
+            {
+                "best_dish": best_dish,
+            },
+        )
+        return state
+    except Exception:
+        pass
 
     name = best_dish.get("name", "未知菜品")
     calories = best_dish.get("calories", "热量未知")
