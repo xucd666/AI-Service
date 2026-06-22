@@ -15,3 +15,5 @@ class AgentState(TypedDict):
     best_dish: Optional[Dict[str, Any]] # 后端查到的最合适的菜品
 
     final_answer: Optional[str] # 最终回复用户
+
+    need_dish_recommendation:Optional[bool] #用户是不是希望顺便推荐菜品
