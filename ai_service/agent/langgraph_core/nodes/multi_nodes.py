@@ -81,6 +81,7 @@ def answer_multi_node(state):
                 "best_dish": best_dish,
                 "dishes": dishes,
             },
+            state.get("messages", []),
         )
 
         logger.info(f"多 Tool 综合回答生成成功: {state.get('final_answer')}")

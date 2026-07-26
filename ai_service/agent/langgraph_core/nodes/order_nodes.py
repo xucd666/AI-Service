@@ -136,6 +136,7 @@ def answer_order_node(state):
                 "order_id": order_id,
                 "order_info": order_info,
             },
+            state.get("messages", []),
         )
 
         logger.info(f"订单回答生成成功: {state.get('final_answer')}")

@@ -10,7 +10,7 @@ from logger import get_logger
 logger = get_logger("SessionMemory")
 
 class SessionMemory:
-    def __init__(self):
+    def __init__(self, key_prefix: str | None = None):
         # 初始化Redis连接
         self.redis_client= redis.Redis(
             host=Config.REDIS_HOST,
@@ -19,8 +19,9 @@ class SessionMemory:
             db=Config.REDIS_DB,  # 绑定指定 Redis 库
             decode_responses=True  # 自动将 bytes 转为字符串，不用手动解码
         )
-        self.key_prefix = Config.SESSION_KEY_PREFIX
+        self.key_prefix = key_prefix or Config.SESSION_KEY_PREFIX
         self.expire = Config.SESSION_EXPIRE_SECONDS
+
 
     def _get_redis_key(self, session_id: str) -> str:
         """

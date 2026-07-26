@@ -97,6 +97,7 @@ def answer_dish_list_node(state):
             {
                 "dishes": dishes,
             },
+            state.get("messages", []),
         )
 
         logger.info(f"减脂餐列表回答生成成功: {state.get('final_answer')}")
@@ -140,6 +141,7 @@ def answer_best_dish_node(state):
             {
                 "best_dish": best_dish,
             },
+            state.get("messages", []),
         )
 
         logger.info(f"最低热量菜品回答生成成功: {state.get('final_answer')}")

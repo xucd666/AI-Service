@@ -49,7 +49,7 @@ async def chat_langgraph(request: ChatRequest):
     """LangGraph 测试聊天接口"""
     logger.info("收到 /chat/langgraph 接口请求")
     try:
-        result = chat_with_langgraph(request.message)
+        result = chat_with_langgraph(request.session_id, request.message)
 
         return ApiResponse(
             code=1,

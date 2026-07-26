@@ -1,10 +1,16 @@
-from typing import TypedDict,Optional,List,Dict,Any
+from typing import TypedDict,Optional,List,Dict,Any,Annotated
+
+from langchain_core.messages import BaseMessage
+from langgraph.graph.message import add_messages
 
 class AgentState(TypedDict):
     """
        完整 State 定义
     """
+    session_id: str # 会话ID，前端生成全局唯一值（如 uuid）
     user_input: str # 用户原始提问（输入源头，全程携带）
+
+    messages:Annotated[List[BaseMessage], add_messages] #LangGraph 会话上下文消息
 
     intent: Optional[str] # 识别出的用户意图，初始None
 
