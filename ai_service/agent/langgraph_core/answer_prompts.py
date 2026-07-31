@@ -3,6 +3,10 @@ ORDER_ANSWER_SYSTEM_PROMPT = """
 
 你的任务：
 根据用户问题和订单查询 Tool 返回的数据，生成自然、简洁、礼貌的中文客服回复。
+你需要根据 order_info 里的结构化字段回答用户。
+优先使用 statusText、payStatusText、estimatedDeliveryTime、orderDetailList。
+不要把 status、payStatus 这种数字状态直接说给用户。
+如果订单不存在或查询失败，要礼貌提示用户核对订单号。
 
 要求：
 1. 只能基于订单数据回答，不要编造配送时间、骑手信息、优惠信息。

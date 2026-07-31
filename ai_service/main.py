@@ -8,7 +8,7 @@ from prompts.customer_prompt import CUSTOMER_SERVICE_PROMPT
 from models.request import ChatRequest, ApiResponse
 from config import Config
 from logger import get_logger
-from agent.langgraph_core.service import chat_with_langgraph
+from agent.langgraph_core.service import chat_with_langgraph, clear_langgraph_history
 
 logger = get_logger("Main")
 #初始化FastAPI
@@ -38,6 +38,7 @@ async def clear_session(session_id: str):
     logger.info(f"收到清空会话请求: {session_id}")
     try:
         agent.session_memory.clear_history(session_id)
+        clear_langgraph_history(session_id)
         return ApiResponse(code=1, message="会话历史已清空", data=None)
     except Exception as e:
         err_msg = f"清空会话失败: {str(e)}"

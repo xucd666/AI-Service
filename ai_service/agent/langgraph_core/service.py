@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger("LangGraphService")
+
 from langchain_core.messages import HumanMessage,AIMessage,BaseMessage
 
 from agent.langgraph_core.graph import build_main_graph
@@ -33,6 +36,9 @@ def _messages_to_dicts(messages:list[BaseMessage]) -> list[dict]:
 def chat_with_langgraph(session_id:str,user_input: str):
     #Redis读取历史对话
     history = langgraph_memory.get_history(session_id)
+
+    logger.info(f"加载历史消息成功 session_id={session_id} count={len(history)}")
+
     history_messages = _dicts_to_messages(history)
 
     #历史 + 当前用户提问，组装送入Graph的初始消息列表
@@ -50,7 +56,8 @@ def chat_with_langgraph(session_id:str,user_input: str):
         "order_info": None,
         "dishes": None,
         "best_dish": None,
-        "final_answer": None
+        "final_answer": None,
+        "need_dish_recommendation": None,
     }
 
     #执行整个智能体流程图，获取最终状态
@@ -68,8 +75,16 @@ def chat_with_langgraph(session_id:str,user_input: str):
     max_messages = Config.LANGGRAPH_HISTORY_MAX_MESSAGES
     save_messages = _messages_to_dicts(new_messages[-max_messages:])
     langgraph_memory.save_history(session_id, save_messages)
+    logger.info(
+        f"保存会话历史成功 session_id={session_id} "
+        f"message_count={len(save_messages)}"
+    )
     #返回对话接口数据
     return {
         "answer": answer,
         "state": result
     }
+
+def clear_langgraph_history(session_id: str):
+    langgraph_memory.clear_history(session_id)
+    logger.info(f"清除会话历史成功 session_id={session_id}")

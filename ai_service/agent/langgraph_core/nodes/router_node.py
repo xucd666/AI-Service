@@ -44,43 +44,54 @@ def safe_parse_router_result(content: str) -> dict:  #安全解析大模型返�
 def router_node(state):
     user_input = state.get("user_input", "")
 
+    conversation_messages = state.get("messages",[])
+
     logger.info(f"开始识别用户意图: {user_input}")
 
     messages = [
         SystemMessage(content="""
-        你是一个餐饮系统智能客服的意图识别器。
-
-        你需要识别用户输入属于哪一类：
-        
-        1. order：用户只想查询订单状态、订单进度、订单是否送达、外卖到哪了
-        2. dish：用户只想查询减脂餐、低脂菜、低热量菜品、减肥期间吃什么、推荐菜品
-        3. multi：用户同时包含订单查询和菜品推荐两个需求，例如“帮我查订单，如果还没到就推荐一个减脂餐”
-        4. unknown：不属于以上业务
-        
-        同时，如果用户输入中包含订单编号，请提取 order_id。
-        订单编号通常是一串数字，例如：1774855083625。
-        
-        同时判断用户是否需要菜品推荐，返回 need_dish_recommendation。
-        
-        你必须只返回 JSON，不要返回任何解释，不要使用 markdown。
-        
-        返回格式如下：
-        
+        你是餐饮系统智能客服的意图识别器。
+    
+        你需要结合【完整对话历史】和【当前用户问题】判断用户意图。
+    
+        意图类型：
+    
+        1. order
+        用户想查询订单状态、配送状态、订单进度、外卖到哪里了。
+        如果当前问题是“它现在是什么状态”“到哪了”“还要多久”，并且历史里最近在聊订单，也判断为 order。
+    
+        2. dish
+        用户想查询减脂餐、低脂菜、低热量菜品、推荐菜品、哪个热量最低、它多少热量。
+        如果当前问题是“哪个热量最低”“它的热量是多少”“刚才那个多少大卡”，并且历史里最近在聊菜品，也判断为 dish。
+    
+        3. multi
+        用户同时包含订单查询和菜品推荐两个需求。
+    
+        4. unknown
+        不属于以上业务。
+    
+        订单号提取规则：
+        - 优先从当前用户问题中提取 order_id
+        - 如果当前没有订单号，但历史对话中最近出现过订单号，并且当前问题仍然在问订单，则从历史中提取 order_id
+        - 订单号通常是 10 到 20 位数字
+    
+        你必须只返回 JSON，不要解释，不要 markdown。
+    
+        返回格式：
         {
-          "intent": "multi",
+          "intent": "order",
           "order_id": "1774855083625",
-          "need_dish_recommendation": true
+          "need_dish_recommendation": false
         }
-        
-        如果没有订单编号：
-        
+    
+        如果没有订单号：
         {
           "intent": "dish",
           "order_id": null,
           "need_dish_recommendation": true
         }
         """),
-        HumanMessage(content=user_input)
+            *conversation_messages,
     ]
 
     response = chat_model.invoke(messages)

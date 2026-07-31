@@ -1,4 +1,4 @@
-import logging
+import logging,json
 
 from agent.langgraph_core.answer_model import generate_customer_answer
 from agent.langgraph_core.answer_prompts import (
@@ -6,6 +6,8 @@ from agent.langgraph_core.answer_prompts import (
     DISH_LIST_ANSWER_SYSTEM_PROMPT,
 )
 from tools.dish_tool import get_low_fat_dishes
+from langchain_core.messages import SystemMessage
+from agent.langgraph_core.model import chat_model
 
 logger = logging.getLogger("DishNodes")
 
@@ -41,12 +43,40 @@ def query_dishes_node(state):
 
 def route_dish_query(state):
     user_input = state.get("user_input", "")
+    conversation_messages = state.get("messages",[])
+    messages = [
+            SystemMessage(content="""
+        你是减脂菜品查询流程的子路由判断器。
+    
+        你需要结合完整对话历史和当前用户问题，判断用户想要：
+    
+        1. list
+        用户想看减脂菜品列表、推荐一些减脂菜、有哪些低脂菜。
+    
+        2. lowest
+        用户想知道哪个热量最低、最低卡路里、最适合减脂的是哪个、它的热量是多少、刚才那个多少大卡。
+        如果当前问题出现“哪个”“哪一个”“最低”“热量”“多少大卡”“它”，并且历史里最近在聊减脂菜品或最低热量菜品，应该判断为 lowest。
+    
+        你必须只返回 JSON，不要解释，不要 markdown。
+    
+        返回格式：
+        {
+          "route": "lowest"
+        }
+        或者：
+        {
+          "route": "list"
+        }
+        """),
+            *conversation_messages,
+    ]
+    response = chat_model.invoke(messages)
+    route = safe_parse_route_result(response.content)
+    logger.info(f"路由判断结果: {route}")
 
-    if any(keyword in user_input for keyword in LOWEST_CALORIE_KEYWORDS):
-        logger.info("用户询问最低热量菜品，路由到 select_lowest_calorie")
+    if route == "lowest":
         return "select_lowest_calorie"
 
-    logger.info("用户询问减脂餐列表，路由到 answer_dish_list")
     return "answer_dish_list"
 
 
@@ -158,3 +188,24 @@ def answer_best_dish_node(state):
     logger.info(f"最低热量菜品兜底回答: {state.get('final_answer')}")
 
     return state
+
+
+def safe_parse_route_result(content: str) -> str:
+    try:
+        content = content.strip()
+
+        if content.startswith("```json"):
+            content = content.replace("```json", "").replace("```", "").strip()
+        elif content.startswith("```"):
+            content = content.replace("```", "").strip()
+
+        data = json.loads(content)
+        route = data.get("route", "list")
+
+        if route not in ["list", "lowest"]:
+            return "list"
+
+        return route
+    except Exception as e:
+        logger.warning(f"Dish route JSON解析失败: {e}, 原始内容: {content}")
+        return "list"

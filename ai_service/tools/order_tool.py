@@ -5,30 +5,38 @@ from config import Config
 from logger import get_logger
 
 logger = get_logger("OrderTool")
-# 带参数业务 Tool：调用Java
-def get_order_status(order_id):
-    url = f"http://localhost:8080/order/status/{order_id}"
-    logger.info(f"调用订单接口: {url}")
-    start_time = time.time()  # 记录起始时间
+
+
+def get_order_info(order_number):
+    # 关键：调用 Java 后端 AI 专用订单详情接口，传入的是订单号，不是数据库 id
+    url = f"http://localhost:8080/ai/order/info/{order_number}"
+    logger.info(f"调用订单详情接口: {url}")
+    start_time = time.time()
+
     try:
-        response = requests.get(url,timeout=Config.TOOL_TIMEOUT)
-        cost_time = round(time.time() - start_time, 2)  # 计算耗时
-        logger.info(f"订单接口响应码: {response.status_code}，执行耗时: {cost_time} s")
+        response = requests.get(url, timeout=Config.TOOL_TIMEOUT)
+        cost_time = round(time.time() - start_time, 2)
+        logger.info(f"订单详情接口响应码: {response.status_code}，执行耗时: {cost_time}s")
 
         result = response.json()
 
+        if result.get("code") != 1:
+            return {
+                "success": False,
+                "data": None,
+                "error": result.get("msg", "订单查询失败")
+            }
+
         return {
             "success": True,
-            "data": {
-                "order_id": order_id,
-                "status": result.get("data")
-            },
+            "data": result.get("data"),
             "error": None
         }
+
     except Exception as e:
         cost_time = round(time.time() - start_time, 2)
         logger.error(
-            f"订单接口调用失败，执行耗时: {cost_time} s，异常: {str(e)}",
+            f"订单详情接口调用失败，执行耗时: {cost_time}s，异常: {str(e)}",
             exc_info=True
         )
 
@@ -38,27 +46,26 @@ def get_order_status(order_id):
             "error": str(e)
         }
 
-# Tool 映射表（企业标准）
+
 tool_map = {
-    "get_order_status": get_order_status
+    "get_order_info": get_order_info
 }
 
-# 带参数 Tool 定义（给AI看）
 tools = [
     {
         "type": "function",
         "function": {
-            "name": "get_order_status",
-            "description": "用户需要查询订单状态时调用，返回订单状态",
+            "name": "get_order_info",
+            "description": "用户需要查询订单状态、订单详情、配送进度、订单菜品信息时调用",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "order_id": {
+                    "order_number": {
                         "type": "string",
-                        "description": "用户提供的订单编号，例如 123456"
+                        "description": "用户提供的订单号，例如 1774855083625"
                     }
                 },
-                "required": ["order_id"]
+                "required": ["order_number"]
             }
         }
     }
